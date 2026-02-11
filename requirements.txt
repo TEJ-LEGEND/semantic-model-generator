@@ -1,7 +1,10 @@
-
-./wheels/streamlit-1.51.0-py3-none-any.whl
-./wheels/strictyaml-1.7.3-py3-none-any.whl
-./wheels/ruamel.yaml-0.19.1-py3-none-any.whl
+# Streamlit container runtime supports 1.50+ from PyPI
+streamlit>=1.50.0
+# Needed by the app
+strictyaml>=1.7.3
+# Upstream pins ruamel.yaml to 0.17.21; keep that to avoid surprises
+ruamel.yaml==0.17.21
+# Snowflake libs—use modern, stable lines
 snowflake-snowpark-python>=1.10.0
-snowflake-connector-python>=3.0.
-
+snowflake-connector-python>=3.0.0
+``

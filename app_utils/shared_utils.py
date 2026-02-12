@@ -11,6 +11,17 @@ from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 import streamlit as st
+
+# --- Streamlit dialog/fragment compatibility (Streamlit >= 1.37) ---
+# New stable names: st.dialog, st.fragment
+# Old experimental names: st.experimental_dialog, st.experimental_fragment
+if not hasattr(st, "experimental_dialog") and hasattr(st, "dialog"):
+    st.experimental_dialog = st.dialog  # type: ignore[attr-defined]
+
+if not hasattr(st, "experimental_fragment") and hasattr(st, "fragment"):
+    st.experimental_fragment = st.fragment  # type: ignore[attr-defined]
+# ---------------------------------------------------------------
+
 from PIL import Image
 from snowflake.connector import ProgrammingError
 from snowflake.connector.connection import SnowflakeConnection
@@ -44,9 +55,7 @@ SNOWFLAKE_ACCOUNT = os.environ.get("SNOWFLAKE_ACCOUNT_LOCATOR", "")
 
 # Add a logo on the top-left corner of the app
 LOGO_URL_LARGE = "https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Snowflake_Logo.svg/2560px-Snowflake_Logo.svg.png"
-LOGO_URL_SMALL = (
-    "https://logos-world.net/wp-content/uploads/2022/11/Snowflake-Symbol.png"
-)
+LOGO_URL_SMALL = "https://logos-world.net/wp-content/uploads/2022/11/Snowflake-Symbol.png"
 
 
 @st.cache_resource
@@ -74,7 +83,7 @@ def set_streamlit_location() -> bool:
     return sis
 
 
-@st.experimental_dialog(title="Setup")
+@st.dialog(title="Setup")
 def env_setup_popup(missing_env_vars: list[str]) -> None:
     """
     Renders a dialog box to prompt the user to set the required connection setup.
@@ -226,9 +235,7 @@ def validate_table_exist(schema: str, table_name: str) -> bool:
     return False
 
 
-def schema_selector_container(
-    db_selector: Dict[str, str], schema_selector: Dict[str, str]
-) -> List[str]:
+def schema_selector_container(db_selector: Dict[str, str], schema_selector: Dict[str, str]) -> List[str]:
     """
     Common component that encapsulates db/schema/table selection for the admin app.
     When a db/schema/table is selected, it is saved to the session state for reading elsewhere.
@@ -388,9 +395,7 @@ def get_yamls_from_stage(stage: str, include_yml: bool = False) -> List[str]:
     return fetch_yaml_names_in_stage(get_snowflake_connection(), stage, include_yml)
 
 
-def set_account_name(
-    conn: SnowflakeConnection, SNOWFLAKE_ACCOUNT: Optional[str] = None
-) -> None:
+def set_account_name(conn: SnowflakeConnection, SNOWFLAKE_ACCOUNT: Optional[str] = None) -> None:
     """
     Sets account_name in st.session_state.
     Used to consolidate from various connection methods.
@@ -398,15 +403,11 @@ def set_account_name(
     # SNOWFLAKE_ACCOUNT may be specified from user's environment variables
     # This will not be the case for connections.toml so need to set it ourselves
     if not SNOWFLAKE_ACCOUNT:
-        SNOWFLAKE_ACCOUNT = (
-            conn.cursor().execute("SELECT CURRENT_ACCOUNT()").fetchone()[0]
-        )
+        SNOWFLAKE_ACCOUNT = conn.cursor().execute("SELECT CURRENT_ACCOUNT()").fetchone()[0]
     st.session_state["account_name"] = SNOWFLAKE_ACCOUNT
 
 
-def set_host_name(
-    conn: SnowflakeConnection, SNOWFLAKE_HOST: Optional[str] = None
-) -> None:
+def set_host_name(conn: SnowflakeConnection, SNOWFLAKE_HOST: Optional[str] = None) -> None:
     """
     Sets host_name in st.session_state.
     Used to consolidate from various connection methods.
@@ -422,9 +423,7 @@ def set_host_name(
         st.session_state["host_name"] = SNOWFLAKE_HOST
 
 
-def set_user_name(
-    conn: SnowflakeConnection, SNOWFLAKE_USER: Optional[str] = None
-) -> None:
+def set_user_name(conn: SnowflakeConnection, SNOWFLAKE_USER: Optional[str] = None) -> None:
     """
     Sets user_name in st.session_state.
     Used to consolidate from various connection methods.
@@ -477,9 +476,7 @@ def changed_from_last_validated_model() -> bool:
     for field in st.session_state.semantic_model.DESCRIPTOR.fields:
         if field.name != "verified_queries":
             model_value = getattr(st.session_state.semantic_model, field.name)
-            last_validated_value = getattr(
-                st.session_state.last_validated_model, field.name
-            )
+            last_validated_value = getattr(st.session_state.last_validated_model, field.name)
             if model_value != last_validated_value:
                 return True
     return False
@@ -516,19 +513,15 @@ def init_session_states() -> None:
         st.session_state.confirmed_edits = False
 
 
-@st.experimental_dialog("Edit Dimension")  # type: ignore[misc]
+@st.dialog("Edit Dimension")
 def edit_dimension(table_name: str, dim: semantic_model_pb2.Dimension) -> None:
     """
     Renders a dialog box to edit an existing dimension.
     """
     key_prefix = f"{table_name}-{dim.name}"
     dim.name = st.text_input("Name", dim.name, key=f"{key_prefix}-edit-dim-name")
-    dim.expr = st.text_input(
-        "SQL Expression", dim.expr, key=f"{key_prefix}-edit-dim-expr"
-    )
-    dim.description = st.text_area(
-        "Description", dim.description, key=f"{key_prefix}-edit-dim-description"
-    )
+    dim.expr = st.text_input("SQL Expression", dim.expr, key=f"{key_prefix}-edit-dim-expr")
+    dim.description = st.text_area("Description", dim.description, key=f"{key_prefix}-edit-dim-description")
     # Allow users to edit synonyms through a data_editor.
     synonyms_df = st.data_editor(
         pd.DataFrame(list(dim.synonyms), columns=["Synonyms"]),
@@ -542,9 +535,7 @@ def edit_dimension(table_name: str, dim: semantic_model_pb2.Dimension) -> None:
             dim.synonyms.append(row["Synonyms"])
 
     # TODO(nsehrawat): Change to a select box with a list of all data types.
-    dim.data_type = st.text_input(
-        "Data type", dim.data_type, key=f"{key_prefix}-edit-dim-datatype"
-    )
+    dim.data_type = st.text_input("Data type", dim.data_type, key=f"{key_prefix}-edit-dim-datatype")
     dim.unique = st.checkbox(
         "Does it have unique values?",
         value=dim.unique,
@@ -566,7 +557,7 @@ def edit_dimension(table_name: str, dim: semantic_model_pb2.Dimension) -> None:
         st.rerun()
 
 
-@st.experimental_dialog("Add Dimension")  # type: ignore[misc]
+@st.dialog("Add Dimension")
 def add_dimension(table: semantic_model_pb2.Table) -> None:
     """
     Renders a dialog box to add a new dimension.
@@ -574,9 +565,7 @@ def add_dimension(table: semantic_model_pb2.Table) -> None:
     dim = Dimension()
     dim.name = st.text_input("Name", key=f"{table.name}-add-dim-name")
     dim.expr = st.text_input("SQL Expression", key=f"{table.name}-add-dim-expr")
-    dim.description = st.text_area(
-        "Description", key=f"{table.name}-add-dim-description"
-    )
+    dim.description = st.text_area("Description", key=f"{table.name}-add-dim-description")
     synonyms_df = st.data_editor(
         pd.DataFrame(list(dim.synonyms), columns=["Synonyms"]),
         num_rows="dynamic",
@@ -587,9 +576,7 @@ def add_dimension(table: semantic_model_pb2.Table) -> None:
             dim.synonyms.append(row["Synonyms"])
 
     dim.data_type = st.text_input("Data type", key=f"{table.name}-add-dim-datatype")
-    dim.unique = st.checkbox(
-        "Does it have unique values?", key=f"{table.name}-add-dim-unique"
-    )
+    dim.unique = st.checkbox("Does it have unique values?", key=f"{table.name}-add-dim-unique")
     sample_values_df = st.data_editor(
         pd.DataFrame(list(dim.sample_values), columns=["Sample Values"]),
         num_rows="dynamic",
@@ -605,20 +592,18 @@ def add_dimension(table: semantic_model_pb2.Table) -> None:
         st.rerun()
 
 
-@st.experimental_dialog("Edit Measure/Fact")  # type: ignore[misc]
+@st.dialog("Edit Measure/Fact")
 def edit_measure(table_name: str, measure: semantic_model_pb2.Fact) -> None:
     """
     Renders a dialog box to edit an existing measure.
     """
     key_prefix = f"{table_name}-{measure.name}"
-    measure.name = st.text_input(
-        "Name", measure.name, key=f"{key_prefix}-edit-measure-name"
-    )
-    measure.expr = st.text_input(
-        "SQL Expression", measure.expr, key=f"{key_prefix}-edit-measure-expr"
-    )
+    measure.name = st.text_input("Name", measure.name, key=f"{key_prefix}-edit-measure-name")
+    measure.expr = st.text_input("SQL Expression", measure.expr, key=f"{key_prefix}-edit-measure-expr")
     measure.description = st.text_area(
-        "Description", measure.description, key=f"{key_prefix}-edit-measure-description"
+        "Description",
+        measure.description,
+        key=f"{key_prefix}-edit-measure-description",
     )
     synonyms_df = st.data_editor(
         pd.DataFrame(list(measure.synonyms), columns=["Synonyms"]),
@@ -631,18 +616,16 @@ def edit_measure(table_name: str, measure: semantic_model_pb2.Fact) -> None:
             measure.synonyms.append(row["Synonyms"])
 
     measure.data_type = st.text_input(
-        "Data type", measure.data_type, key=f"{key_prefix}-edit-measure-data-type"
+        "Data type",
+        measure.data_type,
+        key=f"{key_prefix}-edit-measure-data-type",
     )
 
     aggr_options = semantic_model_pb2.AggregationType.keys()
     # Replace the 'aggregation_type_unknown' string with an empty string for a better display of options.
     aggr_options[0] = ""
     default_aggregation_idx = next(
-        (
-            i
-            for i, s in enumerate(semantic_model_pb2.AggregationType.values())
-            if s == measure.default_aggregation
-        ),
+        (i for i, s in enumerate(semantic_model_pb2.AggregationType.values()) if s == measure.default_aggregation),
         0,
     )
 
@@ -654,15 +637,11 @@ def edit_measure(table_name: str, measure: semantic_model_pb2.Fact) -> None:
     )
     if default_aggregation:
         try:
-            measure.default_aggregation = semantic_model_pb2.AggregationType.Value(
-                default_aggregation
-            )  # type: ignore[assignment]
+            measure.default_aggregation = semantic_model_pb2.AggregationType.Value(default_aggregation)  # type: ignore[assignment]
         except ValueError as e:
             st.error(f"Invalid default_aggregation: {e}")
     else:
-        measure.default_aggregation = (
-            semantic_model_pb2.AggregationType.aggregation_type_unknown
-        )
+        measure.default_aggregation = semantic_model_pb2.AggregationType.aggregation_type_unknown
 
     sample_values_df = st.data_editor(
         pd.DataFrame(list(measure.sample_values), columns=["Sample Values"]),
@@ -678,7 +657,7 @@ def edit_measure(table_name: str, measure: semantic_model_pb2.Fact) -> None:
         st.rerun()
 
 
-@st.experimental_dialog("Add Measure/Fact")  # type: ignore[misc]
+@st.dialog("Add Measure/Fact")
 def add_measure(table: semantic_model_pb2.Table) -> None:
     """
     Renders a dialog box to add a new measure.
@@ -686,12 +665,8 @@ def add_measure(table: semantic_model_pb2.Table) -> None:
     with st.form(key="add-measure"):
         measure = semantic_model_pb2.Fact()
         measure.name = st.text_input("Name", key=f"{table.name}-add-measure-name")
-        measure.expr = st.text_input(
-            "SQL Expression", key=f"{table.name}-add-measure-expr"
-        )
-        measure.description = st.text_area(
-            "Description", key=f"{table.name}-add-measure-description"
-        )
+        measure.expr = st.text_input("SQL Expression", key=f"{table.name}-add-measure-expr")
+        measure.description = st.text_area("Description", key=f"{table.name}-add-measure-description")
         synonyms_df = st.data_editor(
             pd.DataFrame(list(measure.synonyms), columns=["Synonyms"]),
             num_rows="dynamic",
@@ -702,9 +677,7 @@ def add_measure(table: semantic_model_pb2.Table) -> None:
             if row["Synonyms"]:
                 measure.synonyms.append(row["Synonyms"])
 
-        measure.data_type = st.text_input(
-            "Data type", key=f"{table.name}-add-measure-data-type"
-        )
+        measure.data_type = st.text_input("Data type", key=f"{table.name}-add-measure-data-type")
         aggr_options = semantic_model_pb2.AggregationType.keys()
         # Replace the 'aggregation_type_unknown' string with an empty string for a better display of options.
         aggr_options[0] = ""
@@ -715,9 +688,7 @@ def add_measure(table: semantic_model_pb2.Table) -> None:
         )
         if default_aggregation:
             try:
-                measure.default_aggregation = semantic_model_pb2.AggregationType.Value(
-                    default_aggregation
-                )  # type: ignore[assignment]
+                measure.default_aggregation = semantic_model_pb2.AggregationType.Value(default_aggregation)  # type: ignore[assignment]
             except ValueError as e:
                 st.error(f"Invalid default_aggregation: {e}")
 
@@ -738,18 +709,14 @@ def add_measure(table: semantic_model_pb2.Table) -> None:
         st.rerun()
 
 
-@st.experimental_dialog("Edit Time Dimension")  # type: ignore[misc]
-def edit_time_dimension(
-    table_name: str, tdim: semantic_model_pb2.TimeDimension
-) -> None:
+@st.dialog("Edit Time Dimension")
+def edit_time_dimension(table_name: str, tdim: semantic_model_pb2.TimeDimension) -> None:
     """
     Renders a dialog box to edit a time dimension.
     """
     key_prefix = f"{table_name}-{tdim.name}"
     tdim.name = st.text_input("Name", tdim.name, key=f"{key_prefix}-edit-tdim-name")
-    tdim.expr = st.text_input(
-        "SQL Expression", tdim.expr, key=f"{key_prefix}-edit-tdim-expr"
-    )
+    tdim.expr = st.text_input("SQL Expression", tdim.expr, key=f"{key_prefix}-edit-tdim-expr")
     tdim.description = st.text_area(
         "Description",
         tdim.description,
@@ -765,9 +732,7 @@ def edit_time_dimension(
         if row["Synonyms"]:
             tdim.synonyms.append(row["Synonyms"])
 
-    tdim.data_type = st.text_input(
-        "Data type", tdim.data_type, key=f"{key_prefix}-edit-tdim-datatype"
-    )
+    tdim.data_type = st.text_input("Data type", tdim.data_type, key=f"{key_prefix}-edit-tdim-datatype")
     tdim.unique = st.checkbox("Does it have unique values?", value=tdim.unique)
     sample_values_df = st.data_editor(
         pd.DataFrame(list(tdim.sample_values), columns=["Sample Values"]),
@@ -783,7 +748,7 @@ def edit_time_dimension(
         st.rerun()
 
 
-@st.experimental_dialog("Add Time Dimension")  # type: ignore[misc]
+@st.dialog("Add Time Dimension")
 def add_time_dimension(table: semantic_model_pb2.Table) -> None:
     """
     Renders a dialog box to add a new time dimension.
@@ -791,9 +756,7 @@ def add_time_dimension(table: semantic_model_pb2.Table) -> None:
     tdim = semantic_model_pb2.TimeDimension()
     tdim.name = st.text_input("Name", key=f"{table.name}-add-tdim-name")
     tdim.expr = st.text_input("SQL Expression", key=f"{table.name}-add-tdim-expr")
-    tdim.description = st.text_area(
-        "Description", key=f"{table.name}-add-tdim-description"
-    )
+    tdim.description = st.text_area("Description", key=f"{table.name}-add-tdim-description")
     synonyms_df = st.data_editor(
         pd.DataFrame(list(tdim.synonyms), columns=["Synonyms"]),
         num_rows="dynamic",
@@ -806,9 +769,7 @@ def add_time_dimension(table: semantic_model_pb2.Table) -> None:
 
     # TODO(nsehrawat): Change the set of allowed data types here.
     tdim.data_type = st.text_input("Data type", key=f"{table.name}-add-tdim-data-types")
-    tdim.unique = st.checkbox(
-        "Does it have unique values?", key=f"{table.name}-add-tdim-unique"
-    )
+    tdim.unique = st.checkbox("Does it have unique values?", key=f"{table.name}-add-tdim-unique")
     sample_values_df = st.data_editor(
         pd.DataFrame(list(tdim.sample_values), columns=["Sample Values"]),
         num_rows="dynamic",
@@ -877,12 +838,12 @@ def display_table(table_name: str) -> None:
         )
     with fqn_columns[2]:
         table.base_table.table = st.text_input(
-            "Physical Table", table.base_table.table, key=f"{table_name}-base_table"
+            "Physical Table",
+            table.base_table.table,
+            key=f"{table_name}-base_table",
         )
 
-    table.description = st.text_area(
-        "Description", table.description, key=f"{table_name}-description"
-    )
+    table.description = st.text_area("Description", table.description, key=f"{table_name}-description")
 
     synonyms_df = st.data_editor(
         pd.DataFrame(list(table.synonyms), columns=["Synonyms"]),
@@ -981,7 +942,7 @@ def display_table(table_name: str) -> None:
         add_time_dimension(table)
 
 
-@st.experimental_dialog("Add Table")  # type: ignore[misc]
+@st.dialog("Add Table")
 def add_new_table() -> None:
     """
     Renders a dialog box to add a new logical table.
@@ -1098,7 +1059,7 @@ def import_yaml() -> None:
             st.rerun()
 
 
-@st.experimental_dialog("Model YAML", width="large")  # type: ignore
+@st.dialog("Model YAML", width="large")
 def show_yaml_in_dialog() -> None:
     yaml = proto_to_yaml(st.session_state.semantic_model)
     st.code(
@@ -1180,9 +1141,7 @@ def download_yaml(file_name: str, stage_name: str) -> str:
             return yaml_str
 
 
-def get_sit_query_tag(
-    vendor: Optional[str] = None, action: Optional[str] = None
-) -> str:
+def get_sit_query_tag(vendor: Optional[str] = None, action: Optional[str] = None) -> str:
     """
     Returns SIT query tag.
     Returns: str
@@ -1280,7 +1239,6 @@ def run_cortex_complete(
     prompt: str,
     prompt_args: Optional[dict[str, Any]] = None,
 ) -> str | None:
-
     if prompt_args:
         prompt = prompt.format(**prompt_args).replace("'", "\\'")
     complete_sql = f"SELECT snowflake.cortex.complete('{model}', '{prompt}')"

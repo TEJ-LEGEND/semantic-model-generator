@@ -1,7 +1,6 @@
 [project]
 name = "semantic-model-generator-app"
 version = "1.0.0"
-description = "Semantic Model Generator (Snowflake Streamlit - Container Runtime)"
 requires-python = ">=3.9"
 dependencies = [
   "streamlit>=1.50.0",
@@ -23,7 +22,3 @@ dependencies = [
   "snowflake-snowpark-python==1.18.0",
   "snowflake-connector-python[secure-local-storage,pandas]>=3.11.0"
 ]
-
-[project.optional-dependencies]
-looker = ["looker-sdk>=24.14.0"]
-``

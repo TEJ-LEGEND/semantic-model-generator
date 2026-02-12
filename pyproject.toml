@@ -1,10 +1,8 @@
-# --- Streamlit Container Runtime deps for Semantic Model Generator ---
-
 # Streamlit (Container runtime supports 1.50+)
 streamlit>=1.50.0
 streamlit-extras==0.4.0
 
-# App deps (from your Poetry list / upstream)
+# App deps (mirroring your Poetry list / upstream)
 pandas>=2.0.1
 numpy>=1.26.4
 pyarrow==14.0.2

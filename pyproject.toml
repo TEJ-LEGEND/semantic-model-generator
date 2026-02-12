@@ -5,7 +5,7 @@ requires-python = ">=3.9"
 dependencies = [
   "streamlit>=1.50.0",
   "streamlit-extras==0.4.0",
-  "pandas>=2.0.1",
+  "pandas>=2.0.1",                 # <-- required for fetch_pandas_all()
   "numpy>=1.26.4",
   "pyarrow==14.0.2",
   "protobuf==5.26.1",
@@ -20,5 +20,5 @@ dependencies = [
   "urllib3>=1.26.19",
   "requests>=2.32.3",
   "snowflake-snowpark-python==1.18.0",
-  "snowflake-connector-python[secure-local-storage,pandas]>=3.11.0"
+  "snowflake-connector-python[secure-local-storage,pandas]>=3.11.0"  # <-- install extra
 ]

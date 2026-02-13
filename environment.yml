@@ -1,24 +1,64 @@
-name: sf_env
+name: sf-env
+
 channels:
-- snowflake
+
+  - snowflake
+
 dependencies:
-- python=3.10.*
-- pandas=2.2.2
-- tqdm=4.66.5
-- streamlit=1.35.0
-- loguru=0.5.3
-- protobuf=3.20.3
-- pydantic=2.8.2
-- pyyaml=6.0.1
-- ruamel.yaml=0.17.21
-- pyarrow=14.0.2
-- sqlglot=25.10.0
-- numpy=1.26.4
-- python-dotenv=0.21.0
-- urllib3=2.2.2
-- requests=2.32.3
-- types-pyyaml=6.0.12.12
-- types-protobuf=4.25.0.20240417
-- snowflake-snowpark-python=1.18.0
-- streamlit-extras=0.4.0
-- cattrs=23.1.2
+
+  - python=3.10
+
+  # Core Streamlit
+
+  - streamlit=1.35.0
+
+  - streamlit-extras=0.4.0
+
+  # Data & computation
+
+  - pandas=2.2.2
+
+  - numpy=1.26.4
+
+  - pyarrow=14.0.2
+
+  # Snowflake
+
+  - snowflake-snowpark-python=1.18.0
+
+  - snowflake-connector-python
+
+  # Serialization / config
+
+  - pyyaml=6.0.1
+
+  - ruamel.yaml=0.17.21
+
+  - protobuf=3.20.3
+
+  # Validation & models
+
+  - pydantic=2.8.2
+
+  # Utilities
+
+  - tqdm=4.66.5
+
+  - loguru=0.5.3
+
+  - sqlglot=25.10.0
+
+  - python-dotenv=0.21.0
+
+  - requests=2.32.3
+
+  - urllib3=2.2.2
+
+  - cattrs=23.1.2
+
+  # Typing helpers
+
+  - types-pyyaml=6.0.12.12
+
+  - types-protobuf=4.25.0.20240417
+  

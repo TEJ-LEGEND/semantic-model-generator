@@ -2,6 +2,19 @@ import streamlit as st
 from snowflake.connector import DatabaseError
 from snowflake.connector.connection import SnowflakeConnection
 
+import pandas as pd
+
+import snowflake.connector
+
+import streamlit as st
+
+st.write("Python OK")
+
+st.write("Pandas:", pd.__version__)
+
+st.write("Snowflake connector:", snowflake.connector.__version__)
+ 
+
 # set_page_config must be the first Streamlit call
 st.set_page_config(layout="wide", page_icon="💬", page_title="Semantic Model Generator")
 

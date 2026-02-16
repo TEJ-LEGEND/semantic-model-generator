@@ -74,8 +74,24 @@ MEASURE_DATATYPES = [
 ]
 OBJECT_DATATYPES = ["VARIANT", "ARRAY", "OBJECT", "GEOGRAPHY"]
 
-
 _QUERY_TAG = "SEMANTIC_MODEL_GENERATOR"
+
+
+def _cursor_to_df(cursor: Any) -> pd.DataFrame:
+    """
+    Build a pandas DataFrame from a Snowflake cursor that has already executed a query.
+    Works in Streamlit-in-Snowflake where fetch_pandas_all() is blocked.
+    """
+    rows = cursor.fetchall()
+    # Snowflake cursor.description may expose either .name or index 0 (varies by connector version)
+    columns: List[str] = []
+    if cursor.description:
+        first = cursor.description[0]
+        if hasattr(first, "name"):
+            columns = [c.name for c in cursor.description]
+        else:
+            columns = [c[0] for c in cursor.description]
+    return pd.DataFrame(rows, columns=columns)
 
 
 def _get_table_comment(
@@ -235,9 +251,7 @@ def _fetch_valid_tables_and_views(
         cursor = conn.cursor().execute(query)
         assert cursor is not None, "cursor should not be none here."
 
-        df = pd.DataFrame(
-            cursor.fetchall(), columns=[c.name for c in cursor.description]
-        )
+        df = _cursor_to_df(cursor)
         return df[["name", "schema_name", "comment"]].rename(
             columns=dict(
                 name=_TABLE_NAME_COL,
@@ -390,8 +404,8 @@ def fetch_table(conn: SnowflakeConnection, table_fqn: str) -> pd.DataFrame:
     query = f"SELECT * FROM {table_fqn};"
     cursor = conn.cursor()
     cursor.execute(query)
-    query_result = cursor.fetch_pandas_all()
-    return query_result
+    # fetch_pandas_all() is blocked in Streamlit-in-Snowflake; build DF manually.
+    return _cursor_to_df(cursor)
 
 
 def create_table_in_schema(
@@ -448,11 +462,10 @@ join {db_name}.information_schema.columns as c on t.table_schema = c.table_schem
 order by 1, 2, c.ordinal_position"""
     cursor_execute = conn.cursor().execute(query)
     assert cursor_execute, "cursor_execute should not be None here"
-    schemas_tables_columns_df = cursor_execute.fetch_pandas_all()
+    # fetch_pandas_all() is blocked in Streamlit-in-Snowflake; build DF manually.
+    schemas_tables_columns_df = _cursor_to_df(cursor_execute)
 
-    valid_tables_and_views_df = _fetch_valid_tables_and_views(
-        conn=conn, db_name=db_name
-    )
+    valid_tables_and_views_df = _fetch_valid_tables_and_views(conn=conn, db_name=db_name)
 
     valid_schemas_tables_columns_df = valid_tables_and_views_df.merge(
         schemas_tables_columns_df, how="inner", on=(_TABLE_SCHEMA_COL, _TABLE_NAME_COL)
@@ -464,8 +477,11 @@ def get_table_hash(conn: SnowflakeConnection, table_fqn: str) -> str:
     query = f"SELECT HASH_AGG(*)::VARCHAR AS TABLE_HASH FROM {table_fqn};"
     cursor = conn.cursor()
     cursor.execute(query)
-    query_result = cursor.fetch_pandas_all()
-    return query_result["TABLE_HASH"].item()  # type: ignore[no-any-return]
+    row = cursor.fetchone()
+    if row is None:
+        return ""
+    # row[0] corresponds to TABLE_HASH
+    return str(row[0])
 
 
 def execute_query(conn: SnowflakeConnection, query: str) -> Union[pd.DataFrame, str]:
@@ -474,8 +490,8 @@ def execute_query(conn: SnowflakeConnection, query: str) -> Union[pd.DataFrame, 
             raise ValueError("Query string is empty")
         cursor = conn.cursor()
         cursor.execute(query)
-        query_result = cursor.fetch_pandas_all()
-        return query_result
+        # fetch_pandas_all() is blocked in Streamlit-in-Snowflake; build DF manually.
+        return _cursor_to_df(cursor)
     except Exception as e:
         logger.info(f"Query execution failed: {e}")
         return str(e)
